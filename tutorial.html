@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial Lengkap MikroTik - NetAcademy</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .step-title {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .step-content {
+            margin-bottom: 30px;
+            padding-left: 15px;
+            border-left: 3px dashed var(--border);
+        }
+        .highlight {
+            color: #d9534f;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">NetAcademy.</a>
+        <button id="theme-toggle" class="btn-theme">🌙 Dark Mode</button>
+    </nav>
+
+    <div class="container">
+        <a href="index.html" class="back-link">Kembali ke Beranda</a>
+        
+        <div class="note">
+            <strong>📌 PERSIAPAN KABEL:</strong><br>
+            - <strong>ether1:</strong> Sambungkan kabel dari Modem (Sumber Internet) ke port ini.<br>
+            - <strong>ether2:</strong> Sambungkan kabel dari PC/Laptop Anda ke port ini.
+        </div>
+
+        <!-- MATERI 1: BASIC & NAT -->
+        <section>
+            <h2>🌐 1. Konfigurasi Dasar & NAT (Menghubungkan Klien ke Internet)</h2>
+            <p>Sebelum kita mengatur NAT, kita wajib memastikan router MikroTik sudah mendapatkan internet dari modem, dan sudah memiliki alamat untuk komputer Anda. <strong>Ikuti langkah ini secara berurutan:</strong></p>
+            
+            <div class="step-box">
+                <div class="step-title">Langkah 1: Atur DHCP Client (Mendapatkan Internet untuk Router)</div>
+                <div class="step-content">
+                    <p><em>Tujuan: Meminta IP Address otomatis dari Modem ISP ke port ether1.</em></p>
+                    <ol>
+                        <li>Buka aplikasi <strong>Winbox</strong> dan login.</li>
+                        <li>Klik menu <strong>IP</strong> > pilih <strong>DHCP Client</strong>.</li>
+                        <li>Klik tombol <strong>Tambah (+) warna biru</strong>.</li>
+                        <li>Pada kolom <strong>Interface</strong>, pilih <code>ether1</code>.</li>
+                        <li>Klik <strong>Apply</strong> lalu <strong>OK</strong>. Pastikan statusnya berubah menjadi <em>"bound"</em> yang artinya router sudah mendapat IP dari modem.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 2: Buat IP Address untuk LAN (Alamat Jaringan Lokal)</div>
+                <div class="step-content">
+                    <p><em>Tujuan: Memberikan alamat IP untuk port ether2, yang nantinya akan menjadi gerbang (gateway) bagi PC Anda.</em></p>
+                    <ol>
+                        <li>Klik menu <strong>IP</strong> > pilih <strong>Addresses</strong>.</li>
+                        <li>Klik tombol <strong>Tambah (+)</strong>.</li>
+                        <li>Pada kolom <strong>Address</strong>, isi dengan IP untuk jaringan lokal Anda. Contoh: <code>192.168.1.1/24</code>.</li>
+                        <li>Pada kolom <strong>Interface</strong>, ubah menjadi <code>ether2</code>.</li>
+                        <li>Klik <strong>Apply</strong> lalu <strong>OK</strong>.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 3: Konfigurasi DNS (Penerjemah Nama Website)</div>
+                <div class="step-content">
+                    <p><em>Tujuan: Agar router mengenali nama domain seperti google.com, bukan hanya deretan angka IP.</em></p>
+                    <ol>
+                        <li>Klik menu <strong>IP</strong> > pilih <strong>DNS</strong>.</li>
+                        <li>Pada kolom <strong>Servers</strong>, ketik IP DNS Google: <code>8.8.8.8</code>. Jika ingin menambah baris, klik tanda panah kecil ke bawah lalu isi <code>8.8.4.4</code>.</li>
+                        <li><strong>Sangat Penting:</strong> Beri centang pada kotak <strong>Allow Remote Requests</strong>.</li>
+                        <li>Klik <strong>Apply</strong> lalu <strong>OK</strong>.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 4: Uji Koneksi Internet di Router</div>
+                <div class="step-content">
+                    <p><em>Tujuan: Memastikan langkah 1 sampai 3 berhasil sebelum lanjut ke NAT.</em></p>
+                    <ol>
+                        <li>Di sebelah kiri Winbox, klik menu <strong>New Terminal</strong> (layar hitam).</li>
+                        <li>Ketik perintah ini: <code>ping google.com</code> lalu tekan Enter.</li>
+                        <li>Jika muncul tulisan seperti <em>"size=56 ttl=116 time=21ms"</em> secara terus-menerus, selamat! Router Anda sudah online.</li>
+                        <li>Tekan tombol <strong>Ctrl + C</strong> di keyboard untuk menghentikan ping.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 5: Konfigurasi NAT (Membuka Jalan untuk PC Klien)</div>
+                <div class="step-content">
+                    <p><em>Tujuan: Saat ini baru router yang bisa internetan. NAT (Masquerade) berfungsi membagikan internet tersebut ke ether2 agar PC Anda juga bisa online.</em></p>
+                    <ol>
+                        <li>Klik menu <strong>IP</strong> > pilih <strong>Firewall</strong>. Buka tab <strong>NAT</strong>.</li>
+                        <li>Klik tombol <strong>Tambah (+)</strong>.</li>
+                        <li>Di tab <strong>General</strong>: Pastikan Chain adalah <code>srcnat</code>, dan Out. Interface pilih <code>ether1</code> (jalur sumber internet).</li>
+                        <li>Pindah ke tab <strong>Action</strong>: Ubah pilihan Action menjadi <code>masquerade</code>.</li>
+                        <li>Klik <strong>Apply</strong> lalu <strong>OK</strong>. Selesai! PC Anda sekarang sudah bisa terhubung ke internet.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- MATERI 2: BANDWIDTH -->
+        <section>
+            <h2>⚡ 2. Manajemen Bandwidth (Membatasi Kecepatan Internet)</h2>
+            <p><strong>Tujuan:</strong> Mengatur agar kecepatan internet dibagi rata dan tidak ada satu komputer pun yang menghabiskan seluruh kecepatan internet.</p>
+            
+            <div class="step-box">
+                <div class="step-title">Langkah 1: Membuat Aturan Simple Queue</div>
+                <div class="step-content">
+                    <ol>
+                        <li>Pada menu di sebelah kiri, klik menu <strong>Queues</strong>.</li>
+                        <li>Pastikan Anda berada di tab <strong>Simple Queues</strong>. Klik ikon <strong>Tambah (+)</strong>.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 2: Menentukan Target & Batas Kecepatan</div>
+                <div class="step-content">
+                    <ol>
+                        <li>Pada tab <strong>General</strong>, isi kolom <strong>Name</strong> dengan bebas (Contoh: <code>Limitasi-Klien</code>).</li>
+                        <li>Pada kolom <strong>Target</strong>, klik tanda panah ke bawah, lalu pilih <code>ether2</code> <em>(Semua yang terhubung ke ether2 akan dilimit)</em>.</li>
+                        <li>Pada baris <strong>Max Limit</strong> kolom Upload, ketik batas unggah, misal <code>2M</code>.</li>
+                        <li>Pada baris <strong>Max Limit</strong> kolom Download, ketik batas unduh, misal <code>5M</code>.</li>
+                        <li>Klik <strong>Apply</strong>, lalu klik <strong>OK</strong>.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+        
+        <!-- MATERI 3: PROXY -->
+        <section>
+            <h2>🛡️ 3. Konfigurasi Web Proxy (Memblokir Situs Web)</h2>
+            <p><strong>Tujuan:</strong> Menjadikan router sebagai penyaring lalu lintas internet untuk memblokir situs HTTP tertentu secara otomatis.</p>
+            
+            <div class="step-box">
+                <div class="step-title">Langkah 1: Mengaktifkan Web Proxy Server</div>
+                <div class="step-content">
+                    <ol>
+                        <li>Klik menu <strong>IP</strong> > <strong>Web Proxy</strong>.</li>
+                        <li>Beri centang pada kotak <strong>Enabled</strong>. Pastikan Port <code>8080</code>.</li>
+                        <li>Klik <strong>Apply</strong> <em>(Biarkan jendela ini tetap terbuka)</em>.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 2: Membuat Aturan Blokir Situs</div>
+                <div class="step-content">
+                    <ol>
+                        <li>Di jendela Web Proxy tadi, klik tombol <strong>Access</strong> di sebelah kanan.</li>
+                        <li>Klik ikon <strong>Tambah (+)</strong>.</li>
+                        <li>Pada kolom <strong>Dst. Host</strong>, ketik alamat situs (contoh: <code>*linux.org*</code>).</li>
+                        <li>Pada kolom <strong>Action</strong>, ubah pilihannya menjadi <code>deny</code>.</li>
+                        <li>Klik <strong>Apply</strong> lalu <strong>OK</strong>. Tutup jendela Access.</li>
+                    </ol>
+                </div>
+
+                <div class="step-title">Langkah 3: Mengalihkan Trafik ke Proxy (Transparent)</div>
+                <div class="step-content">
+                    <p><em>Tujuan: Memaksa perangkat PC melewati aturan proxy di atas.</em></p>
+                    <ol>
+                        <li>Klik menu <strong>IP</strong> > <strong>Firewall</strong> > Tab <strong>NAT</strong>. Klik Tambah <strong>(+)</strong>.</li>
+                        <li>Di tab <strong>General</strong> atur: Chain = <code>dstnat</code>, Protocol = <code>6 (tcp)</code>, Dst. Port = <code>80</code>.</li>
+                        <li>Di tab <strong>Action</strong> atur: Action = <code>redirect</code>, To Ports = <code>8080</code>.</li>
+                        <li>Klik <strong>Apply</strong> lalu <strong>OK</strong>.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 NetAcademy. Disusun terstruktur agar mudah dipahami dari nol.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
